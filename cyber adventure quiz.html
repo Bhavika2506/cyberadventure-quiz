@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Adventure Quiz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: radial-gradient(circle at top, #0a0f1c, #000);
+      color: #e0e0e0;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .quiz-container {
+      background: rgba(20, 20, 40, 0.8);
+      border-radius: 20px;
+      padding: 30px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 0 20px rgba(0,255,200,0.4);
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    h1 {
+      color: #00ffc3;
+      margin-bottom: 20px;
+    }
+
+#options {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.option {
+  width: 80%;
+  max-width: 400px;
+  text-align: center;
+  background: linear-gradient(145deg, rgba(0,255,195,0.1), rgba(0,255,195,0.05));
+  border: 2px solid #00ffc3;
+  border-radius: 16px;
+  padding: 14px 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #e0e0e0;
+  font-size: 16px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 15px rgba(0,255,195,0.25);
+}
+
+.option:hover {
+  background: rgba(0, 255, 195, 0.2);
+  box-shadow: 0 0 25px #00ffc3;
+  transform: scale(1.05);
+}
+
+.option:active {
+  transform: scale(0.96);
+  box-shadow: 0 0 15px #ff66cc;
+}
+
+/* Correct / Wrong feedback colors */
+.option.correct {
+  border-color: #00ff99;
+  box-shadow: 0 0 20px #00ff99;
+  background: rgba(0, 255, 153, 0.15);
+}
+
+.option.wrong {
+  border-color: #ff4d6d;
+  box-shadow: 0 0 20px #ff4d6d;
+  background: rgba(255, 77, 109, 0.15);
+}
+
+
+    
+
+    #feedback {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    #nextBtn, #restartBtn {
+      background: #00ffc3;
+      color: #000;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 12px;
+      margin-top: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      display: none;
+    }
+    #restartBtn { background: #ff66cc; }
+
+    /* Floating cyber elements */
+    .floating {
+      position: absolute;
+      font-size: 24px;
+      color: #00ffc3;
+      opacity: 0.2;
+      animation: float 10s infinite linear;
+      z-index: 1;
+    }
+    @keyframes float {
+      from { transform: translateY(-10vh); }
+      to { transform: translateY(110vh); }
+    }
+
+    /* Confetti */
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: #00ffc3;
+      opacity: 0.8;
+      animation: fall 3s linear forwards;
+      z-index: 3;
+    }
+    @keyframes fall {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* Shake */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      50% { transform: translateX(10px); }
+      75% { transform: translateX(-10px); }
+    }
+    .shake { animation: shake 0.5s; }
+
+    /* Pulse */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .pulse { animation: pulse 1s infinite; }
+  </style>
+</head>
+<body>
+
+  <!-- Floating cyber icons -->
+  <div class="floating" style="left:5%;">🔒</div>
+  <div class="floating" style="left:20%; animation-duration:12s;">📧</div>
+  <div class="floating" style="left:40%; animation-duration:15s;">⚠️</div>
+  <div class="floating" style="left:70%; animation-duration:18s;">🔒</div>
+  <div class="floating" style="left:85%; animation-duration:20s;">📧</div>
+
+  <div class="quiz-container">
+    <h1>Cyber Adventure Quiz 🕵️‍♀️</h1>
+    <p id="question">Loading question...</p>
+    <div id="options"></div>
+    <p id="feedback"></p>
+    <button id="nextBtn" onclick="nextQuestion()">Next ➡️</button>
+    <button id="restartBtn" onclick="startQuiz()">🔄 Play Again</button>
+  </div>
+
+  <!-- Animation container -->
+  <div id="animationContainer"></div>
+
+  <!-- Sounds -->
+  <audio id="correctSound" preload="auto">
+    <source src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" type="audio/ogg">
+  </audio>
+  <audio id="wrongSound" preload="auto">
+    <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg">
+  </audio>
+
+<script>
+const questionBank = [
+  {q:"You're creating a password for your secret superhero base. Which is safest?", o:["123456","Superman","Myp@ssw0rd!2025","qwerty"], a:2, tip:"Use a mix of upper/lowercase, numbers, and symbols!"},
+  {q:"A suspicious email says 'Click this link to win a free iPhone!'. What should you do?", o:["Click it fast!","Delete or report it","Forward it to all friends","Reply to claim prize"], a:1, tip:"That’s a phishing attempt – don’t click suspicious links!"},
+  {q:"You’re browsing online. Which website is safest?", o:["http://coolstuff.com","https://secure-shop.com","www.bestsite.net","randomlink.biz"], a:1, tip:"Always look for HTTPS with the lock icon 🔒."},
+  {q:"Your phone asks for a software update. What should you do?", o:["Ignore it","Update later (never)","Update immediately","Throw phone away"], a:2, tip:"Updates patch security holes. Always update!"},
+  {q:"You log in and site asks for a 6-digit code sent to your phone. This is…", o:["Magic","Two-Factor Authentication","A trick","Captcha"], a:1, tip:"2FA adds an extra lock to your account."},
+  {q:"A stranger offers free Wi-Fi named 'Free_Cafe_Wifi'. What’s the risk?", o:["Nothing! Free internet!","It could be a trap to steal data","It makes your phone faster","It boosts your battery"], a:1, tip:"Public Wi-Fi can be unsafe. Avoid unknown networks."},
+  {q:"Your friend sends a file named 'funnyvideo.exe'. What should you do?", o:["Open it","Delete or scan first","Send it to others","Rename it"], a:1, tip:".exe can contain malware. Be careful!"},
+  {q:"Which is the strongest password?", o:["dog123","IlovePizza","T!g3r$2025!","abcdef"], a:2, tip:"The longer and more complex, the better."},
+  {q:"You’re shopping online. Best payment method?", o:["Credit card on secure site","Send cash in mail","Share bank PIN","Post details on social media"], a:0, tip:"Always use secure, traceable payments."},
+  {q:"A pop-up says 'Your computer is infected! Download CleanerApp!'. Best response?", o:["Click download","Close the pop-up","Restart PC immediately","Unplug the internet"], a:1, tip:"Fake pop-ups trick you. Close it safely."},
+  {q:"Boss asks for your login via email urgently. What should you do?", o:["Send details quickly","Verify through other channel","Ignore boss forever","Forward email to all staff"], a:1, tip:"Always verify requests outside email. Could be phishing."},
+  {q:"You forgot your password. Best way?", o:["Use password manager","Write it on your desk","Use '1234'","Never reset it"], a:0, tip:"Password managers keep them safe and strong."},
+  {q:"Strong password practice?", o:["Reuse old passwords","Short & easy","Unique per site","Always 'password123'"], a:2, tip:"Unique per site keeps accounts safe."},
+  {q:"You see a USB stick on the ground. What now?", o:["Plug it in","Throw it away or give IT","Share with friends","Sell it"], a:1, tip:"Unknown USB could contain malware."},
+  {q:"Which link is safest?", o:["www.bank-login.secure.com.fake","secure-bank.com","banklogin.freehost.com","bit.ly/securebank"], a:1, tip:"Look carefully – only official domains are safe."},
+  {q:"Friend asks for Netflix password. What should you do?", o:["Share it","Politely refuse","Post it online","Use 'guest123'"], a:1, tip:"Never share passwords."},
+  {q:"What is phishing?", o:["Catching fish online","Tricking users to give info","Upgrading Wi-Fi","Installing antivirus"], a:1, tip:"Phishing is about tricking you into revealing secrets."},
+  {q:"Which device needs updates?", o:["Only laptops","Only phones","Everything with software","None"], a:2, tip:"All devices need updates."},
+  {q:"Which is a red flag in email?", o:["Spelling errors & urgent tone","Polite greeting","Personal name used","Known sender"], a:0, tip:"Scammers rush and misspell."},
+  {q:"Safe browsing habit?", o:["Clicking all ads","Visiting HTTPS sites","Ignoring lock icon","Saving passwords in notes"], a:1, tip:"HTTPS is safer."},
+  {q:"What’s social engineering?", o:["Building social apps","Tricking people instead of hacking systems","Making new networks","Coding websites"], a:1, tip:"It’s about manipulating people."},
+  {q:"Which is safe to post online?", o:["Bank PIN","Full address","Pet photo","Password"], a:2, tip:"Pet photos are okay, not sensitive data."},
+  {q:"Your antivirus expired. What now?", o:["Uninstall it","Renew or replace it","Ignore it","Turn off computer"], a:1, tip:"Keep protection up to date."},
+  {q:"What’s the safest password storage?", o:["In browser notes","Password manager","On sticky note","Text file"], a:1, tip:"Managers are best."},
+  {q:"What is ransomware?", o:["A dance","Malware that locks files","Password type","Antivirus"], a:1, tip:"It locks files until ransom is paid."}
+];
+
+let shuffled = [];
+let currentQ = 0;
+let score = 0;
+
+function startQuiz() {
+  shuffled = questionBank.sort(() => 0.5 - Math.random()).slice(0,10);
+  currentQ = 0;
+  score = 0;
+  document.getElementById('restartBtn').style.display = 'none';
+  document.getElementById('nextBtn').style.display = 'none';
+  loadQuestion();
+}
+function loadQuestion() {
+  const q = shuffled[currentQ];
+  document.getElementById('question').textContent = q.q;
+  const optionsDiv = document.getElementById('options');
+  optionsDiv.innerHTML = "";
+
+  // shuffle with original indexes
+  const shuffledOptions = q.o.map((opt, idx) => ({opt, idx})).sort(() => Math.random() - 0.5);
+
+  shuffledOptions.forEach((obj, newIdx) => {
+    const btn = document.createElement('button');
+    btn.textContent = obj.opt;
+    btn.className = 'option';
+    // pass new index (aligned with rendered buttons)
+    btn.onclick = () => checkAnswer(newIdx, shuffledOptions, q.a);
+    optionsDiv.appendChild(btn);
+  });
+
+  document.getElementById('feedback').textContent = "";
+  document.getElementById('nextBtn').style.display = 'none';
+}
+
+function checkAnswer(selectedIdx, shuffledOptions, correctIdx) {
+  const q = shuffled[currentQ];
+  const feedback = document.getElementById('feedback');
+  const correctSound = document.getElementById('correctSound');
+  const wrongSound = document.getElementById('wrongSound');
+  const options = document.querySelectorAll('.option');
+
+  // Find where the correct answer ended up in shuffled list
+  const correctPosition = shuffledOptions.findIndex(obj => obj.idx === correctIdx);
+
+  // disable all options after one click
+  options.forEach(btn => btn.disabled = true);
+
+  if (selectedIdx === correctPosition) {
+    options[selectedIdx].classList.add('correct');
+    score++;
+    feedback.textContent = "✅ Correct! You're leveling up your cyber skills!";
+    feedback.style.color = "#00ff99";
+    correctSound.currentTime = 0;
+    correctSound.play();
+  } else {
+    options[selectedIdx].classList.add('wrong');
+    options[correctPosition].classList.add('correct');
+    feedback.innerHTML = `❌ Oops! ${q.tip} <br> ✅ The correct answer was: <strong>${q.o[correctIdx]}</strong>`;
+    feedback.style.color = "#ff6666";
+    wrongSound.currentTime = 0;
+    wrongSound.play();
+  }
+
+  document.getElementById('nextBtn').style.display = 'inline-block';
+}
+
+  function nextQuestion() {
+  currentQ++;
+  if(currentQ < shuffled.length) {
+    loadQuestion();
+  } else {
+    endQuiz();
+  }
+}  
+
+function showConfetti() {
+  const container = document.getElementById('animationContainer');
+  for (let i = 0; i < 100; i++) {
+    const confetto = document.createElement('div');
+    confetto.className = 'confetti';
+    confetto.style.left = Math.random() * window.innerWidth + 'px';
+    confetto.style.backgroundColor = `hsl(${Math.random()*360}, 100%, 50%)`;
+    container.appendChild(confetto);
+    setTimeout(() => confetto.remove(), 3000);
+  }
+}
+
+function applyShake() {
+  const result = document.getElementById('options');
+  result.classList.add('shake');
+  setTimeout(() => result.classList.remove('shake'), 500);
+}
+
+function applyPulse() {
+  const result = document.getElementById('options');
+  result.classList.add('pulse');
+}
+
+function endQuiz(){
+  document.getElementById('question').textContent = `Quiz Over! 🎉 You scored ${score}/${shuffled.length}`;
+  
+  let rankPool = [];
+  if(score <= 3) rankPool = ['😅 Password Padawan','🐣 Clickbait Rookie','🙈 Captcha Confused'];
+  else if(score <= 6) rankPool = ['🐟 Phishing Fighter','🧹 Spam Slayer','🔥 Firewall Apprentice'];
+  else if(score <= 9) rankPool = ['⚔️ Cyber Knight','🕵️ Trojan Tracker','🦠 Malware Masher'];
+  else rankPool = ['🛡️ Cyber Guardian','🔐 Encryption Expert','🦸 Digital Superhero'];
+
+  const rank = rankPool[Math.floor(Math.random()*rankPool.length)];
+  document.getElementById('options').innerHTML = `<p>Your Cyber Rank: <strong>${rank}</strong></p>`;
+  document.getElementById('feedback').textContent = "";
+  document.getElementById('nextBtn').style.display = 'none';
+  document.getElementById('restartBtn').style.display = 'inline-block';
+
+  if(score <= 3) applyShake();
+  else if(score <= 6) applyPulse();
+  else showConfetti();
+}
+
+startQuiz();
+</script>
+
+</body>
+</html>
